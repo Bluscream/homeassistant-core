@@ -200,13 +200,14 @@ class AuthStore:
             assert self._users is not None
 
         for user in self._users.values():
-            found = None
-
-            for index, cred in enumerate(user.credentials):
-                if cred is credentials:
-                    found = index
-                    break
-
+            found = next(
+                (
+                    index
+                    for index, cred in enumerate(user.credentials)
+                    if cred is credentials
+                ),
+                None,
+            )
             if found is not None:
                 user.credentials.pop(found)
                 break

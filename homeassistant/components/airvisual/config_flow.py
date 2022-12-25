@@ -176,26 +176,29 @@ class AirVisualFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, str] | None = None
     ) -> FlowResult:
         """Handle the initialization of the cloud API based on latitude/longitude."""
-        if not user_input:
-            return self.async_show_form(
-                step_id="geography_by_coords", data_schema=self.geography_coords_schema
+        return (
+            await self._async_init_geography(
+                user_input, INTEGRATION_TYPE_GEOGRAPHY_COORDS
             )
-
-        return await self._async_init_geography(
-            user_input, INTEGRATION_TYPE_GEOGRAPHY_COORDS
+            if user_input
+            else self.async_show_form(
+                step_id="geography_by_coords",
+                data_schema=self.geography_coords_schema,
+            )
         )
 
     async def async_step_geography_by_name(
         self, user_input: dict[str, str] | None = None
     ) -> FlowResult:
         """Handle the initialization of the cloud API based on city/state/country."""
-        if not user_input:
-            return self.async_show_form(
+        return (
+            await self._async_init_geography(
+                user_input, INTEGRATION_TYPE_GEOGRAPHY_NAME
+            )
+            if user_input
+            else self.async_show_form(
                 step_id="geography_by_name", data_schema=GEOGRAPHY_NAME_SCHEMA
             )
-
-        return await self._async_init_geography(
-            user_input, INTEGRATION_TYPE_GEOGRAPHY_NAME
         )
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:

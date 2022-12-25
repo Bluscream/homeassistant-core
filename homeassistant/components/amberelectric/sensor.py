@@ -46,9 +46,7 @@ def friendly_channel_type(channel_type: str) -> str:
     """Return a human readable version of the channel type."""
     if channel_type == "controlled_load":
         return "Controlled Load"
-    if channel_type == "feed_in":
-        return "Feed In"
-    return "General"
+    return "Feed In" if channel_type == "feed_in" else "General"
 
 
 class AmberSensor(CoordinatorEntity[AmberUpdateCoordinator], SensorEntity):
@@ -148,9 +146,7 @@ class AmberForecastSensor(AmberSensor):
         }
 
         for interval in intervals:
-            datum = {}
-            datum["duration"] = interval.duration
-            datum["date"] = interval.date.isoformat()
+            datum = {"duration": interval.duration, "date": interval.date.isoformat()}
             datum["nem_date"] = interval.nem_time.isoformat()
             datum["per_kwh"] = format_cents_to_dollars(interval.per_kwh)
             if interval.channel_type == ChannelType.FEED_IN:

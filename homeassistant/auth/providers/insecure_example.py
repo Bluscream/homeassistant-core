@@ -83,13 +83,14 @@ class ExampleAuthProvider(AuthProvider):
         Will be used to populate info when creating a new user.
         """
         username = credentials.data["username"]
-        name = None
-
-        for user in self.config["users"]:
-            if user["username"] == username:
-                name = user.get("name")
-                break
-
+        name = next(
+            (
+                user.get("name")
+                for user in self.config["users"]
+                if user["username"] == username
+            ),
+            None,
+        )
         return UserMeta(name=name, is_active=True)
 
 

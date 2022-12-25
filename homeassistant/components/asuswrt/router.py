@@ -246,7 +246,7 @@ class AsusWrtRouter:
             CONF_INTERFACE: DEFAULT_INTERFACE,
             CONF_REQUIRE_IP: True,
         }
-        self._options.update(entry.options)
+        self._options |= entry.options
 
     async def setup(self) -> None:
         """Set up a AsusWrt router."""
@@ -281,10 +281,9 @@ class AsusWrtRouter:
 
             # migrate entity unique ID if wrong formatted
             if device_mac != entry.unique_id:
-                existing_entity_id = entity_reg.async_get_entity_id(
+                if existing_entity_id := entity_reg.async_get_entity_id(
                     TRACKER_DOMAIN, DOMAIN, device_mac
-                )
-                if existing_entity_id:
+                ):
                     # entity with uniqueid properly formatted already
                     # exists in the registry, we delete this duplicate
                     entity_reg.async_remove(entry.entity_id)

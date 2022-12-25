@@ -54,10 +54,7 @@ def _retrieve_motion_state(data: AugustData, detail: DoorbellDetail) -> bool:
         detail.device_id, {ActivityType.DOORBELL_MOTION}
     )
 
-    if latest is None:
-        return False
-
-    return _activity_time_based_state(latest)
+    return False if latest is None else _activity_time_based_state(latest)
 
 
 def _retrieve_image_capture_state(data: AugustData, detail: DoorbellDetail) -> bool:
@@ -65,10 +62,7 @@ def _retrieve_image_capture_state(data: AugustData, detail: DoorbellDetail) -> b
         detail.device_id, {ActivityType.DOORBELL_IMAGE_CAPTURE}
     )
 
-    if latest is None:
-        return False
-
-    return _activity_time_based_state(latest)
+    return False if latest is None else _activity_time_based_state(latest)
 
 
 def _retrieve_ding_state(data: AugustData, detail: DoorbellDetail) -> bool:

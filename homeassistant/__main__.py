@@ -131,9 +131,7 @@ def get_arguments() -> argparse.Namespace:
         help="Skips validation of operating system",
     )
 
-    arguments = parser.parse_args()
-
-    return arguments
+    return parser.parse_args()
 
 
 def cmdline() -> list[str]:

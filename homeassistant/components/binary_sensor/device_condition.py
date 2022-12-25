@@ -302,10 +302,7 @@ def async_condition_from_config(
 ) -> condition.ConditionCheckerType:
     """Evaluate state based on configuration."""
     condition_type = config[CONF_TYPE]
-    if condition_type in IS_ON:
-        stat = "on"
-    else:
-        stat = "off"
+    stat = "on" if condition_type in IS_ON else "off"
     state_config = {
         CONF_CONDITION: "state",
         CONF_ENTITY_ID: config[CONF_ENTITY_ID],

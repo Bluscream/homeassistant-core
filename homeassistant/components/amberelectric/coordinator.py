@@ -61,9 +61,7 @@ def normalize_descriptor(descriptor: Descriptor) -> str | None:
         return "very_low"
     if descriptor.value == "extremelyLow":
         return "extremely_low"
-    if descriptor.value == "negative":
-        return "negative"
-    return None
+    return "negative" if descriptor.value == "negative" else None
 
 
 class AmberUpdateCoordinator(DataUpdateCoordinator):
@@ -100,7 +98,7 @@ class AmberUpdateCoordinator(DataUpdateCoordinator):
         forecasts = [interval for interval in data if is_forecast(interval)]
         general = [interval for interval in current if is_general(interval)]
 
-        if len(general) == 0:
+        if not general:
             raise UpdateFailed("No general channel configured")
 
         result["current"]["general"] = general[0]
@@ -111,10 +109,9 @@ class AmberUpdateCoordinator(DataUpdateCoordinator):
         result["grid"]["renewables"] = round(general[0].renewables)
         result["grid"]["price_spike"] = general[0].spike_status.value
 
-        controlled_load = [
+        if controlled_load := [
             interval for interval in current if is_controlled_load(interval)
-        ]
-        if controlled_load:
+        ]:
             result["current"]["controlled_load"] = controlled_load[0]
             result["descriptors"]["controlled_load"] = normalize_descriptor(
                 controlled_load[0].descriptor
@@ -123,8 +120,7 @@ class AmberUpdateCoordinator(DataUpdateCoordinator):
                 interval for interval in forecasts if is_controlled_load(interval)
             ]
 
-        feed_in = [interval for interval in current if is_feed_in(interval)]
-        if feed_in:
+        if feed_in := [interval for interval in current if is_feed_in(interval)]:
             result["current"]["feed_in"] = feed_in[0]
             result["descriptors"]["feed_in"] = normalize_descriptor(
                 feed_in[0].descriptor

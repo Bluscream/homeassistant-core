@@ -348,7 +348,7 @@ async def async_get_zeroconf(
             data: dict[str, str | dict[str, str]] = {"domain": integration.domain}
             if isinstance(entry, dict):
                 typ = entry["type"]
-                data.update(async_process_zeroconf_match_dict(entry))
+                data |= async_process_zeroconf_match_dict(entry)
             else:
                 typ = entry
 

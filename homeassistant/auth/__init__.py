@@ -73,8 +73,7 @@ async def auth_manager_from_config(
     for module in modules:
         module_hash[module.id] = module
 
-    manager = AuthManager(hass, store, provider_hash, module_hash)
-    return manager
+    return AuthManager(hass, store, provider_hash, module_hash)
 
 
 class AuthManagerFlowManager(data_entry_flow.FlowManager):
@@ -93,10 +92,10 @@ class AuthManagerFlowManager(data_entry_flow.FlowManager):
         data: dict[str, Any] | None = None,
     ) -> data_entry_flow.FlowHandler:
         """Create a login flow."""
-        auth_provider = self.auth_manager.get_auth_provider(*handler_key)
-        if not auth_provider:
+        if auth_provider := self.auth_manager.get_auth_provider(*handler_key):
+            return await auth_provider.async_login_flow(context)
+        else:
             raise KeyError(f"Unknown auth provider {handler_key}")
-        return await auth_provider.async_login_flow(context)
 
     async def async_finish_flow(
         self, flow: data_entry_flow.FlowHandler, result: FlowResult
@@ -301,12 +300,10 @@ class AuthManager:
 
     async def async_remove_user(self, user: models.User) -> None:
         """Remove a user."""
-        tasks = [
+        if tasks := [
             self.async_remove_credentials(credentials)
             for credentials in user.credentials
-        ]
-
-        if tasks:
+        ]:
             await asyncio.gather(*tasks)
 
         await self._store.async_remove_user(user)
@@ -322,15 +319,15 @@ class AuthManager:
         local_only: bool | None = None,
     ) -> None:
         """Update a user."""
-        kwargs: dict[str, Any] = {}
-
-        for attr_name, value in (
-            ("name", name),
-            ("group_ids", group_ids),
-            ("local_only", local_only),
-        ):
-            if value is not None:
-                kwargs[attr_name] = value
+        kwargs: dict[str, Any] = {
+            attr_name: value
+            for attr_name, value in (
+                ("name", name),
+                ("group_ids", group_ids),
+                ("local_only", local_only),
+            )
+            if value is not None
+        }
         await self._store.async_update_user(user, **kwargs)
 
         if is_active is not None:
@@ -599,8 +596,6 @@ class AuthManager:
         A user should be an owner if it is the first non-system user that is
         being created.
         """
-        for user in await self._store.async_get_users():
-            if not user.system_generated:
-                return False
-
-        return True
+        return all(
+            user.system_generated for user in await self._store.async_get_users()
+        )

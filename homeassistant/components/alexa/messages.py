@@ -63,8 +63,7 @@ class AlexaDirective:
         """
         response = AlexaResponse(name, namespace, payload)
 
-        token = self._directive[API_HEADER].get("correlationToken")
-        if token:
+        if token := self._directive[API_HEADER].get("correlationToken"):
             response.set_correlation_token(token)
 
         if self.has_endpoint:

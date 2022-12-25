@@ -28,8 +28,10 @@ async def async_setup_entry(
     ]
     entities = []
     for unit, coordinator in data:
-        for variable in unit.variables:
-            entities.append(VariableSensorEntity(unit, variable, coordinator))
+        entities.extend(
+            VariableSensorEntity(unit, variable, coordinator)
+            for variable in unit.variables
+        )
     async_add_entities(entities)
 
 

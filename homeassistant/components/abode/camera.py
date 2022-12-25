@@ -91,10 +91,7 @@ class AbodeCamera(AbodeDevice, Camera):
         """Get a camera image."""
         self.refresh_image()
 
-        if self._response:
-            return self._response.content
-
-        return None
+        return self._response.content if self._response else None
 
     def turn_on(self) -> None:
         """Turn on camera."""

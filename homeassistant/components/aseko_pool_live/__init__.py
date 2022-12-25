@@ -58,11 +58,7 @@ class AsekoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Variable]]):
         """Initialize global Aseko unit data updater."""
         self._unit = unit
 
-        if self._unit.name:
-            name = self._unit.name
-        else:
-            name = f"{self._unit.type}-{self._unit.serial_number}"
-
+        name = self._unit.name or f"{self._unit.type}-{self._unit.serial_number}"
         super().__init__(
             hass,
             _LOGGER,

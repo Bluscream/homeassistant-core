@@ -63,12 +63,18 @@ class ArubaDeviceScanner(DeviceScanner):
 
     def get_device_name(self, device):
         """Return the name of the given device or None if we don't know."""
-        if not self.last_results:
-            return None
-        for client in self.last_results:
-            if client["mac"] == device:
-                return client["name"]
-        return None
+        return (
+            next(
+                (
+                    client["name"]
+                    for client in self.last_results
+                    if client["mac"] == device
+                ),
+                None,
+            )
+            if self.last_results
+            else None
+        )
 
     def _update_info(self):
         """Ensure the information from the Aruba Access Point is up to date.

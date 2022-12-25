@@ -63,10 +63,7 @@ class LegacyApiPasswordAuthProvider(AuthProvider):
     ) -> Credentials:
         """Return credentials for this login."""
         credentials = await self.async_credentials()
-        if credentials:
-            return credentials[0]
-
-        return self.async_create_credentials({})
+        return credentials[0] if credentials else self.async_create_credentials({})
 
     async def async_user_meta_for_credentials(
         self, credentials: Credentials

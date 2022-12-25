@@ -37,23 +37,22 @@ class AwairFlowHandler(ConfigFlow, domain=DOMAIN):
 
         self._device, _ = await self._check_local_connection(host)
 
-        if self._device is not None:
-            await self.async_set_unique_id(self._device.mac_address)
-            self._abort_if_unique_id_configured(
-                updates={CONF_HOST: self._device.device_addr},
-                error="already_configured_device",
-            )
-            self.context.update(
-                {
-                    "host": host,
-                    "title_placeholders": {
-                        "model": self._device.model,
-                        "device_id": self._device.device_id,
-                    },
-                }
-            )
-        else:
+        if self._device is None:
             return self.async_abort(reason="unreachable")
+        await self.async_set_unique_id(self._device.mac_address)
+        self._abort_if_unique_id_configured(
+            updates={CONF_HOST: self._device.device_addr},
+            error="already_configured_device",
+        )
+        self.context.update(
+            {
+                "host": host,
+                "title_placeholders": {
+                    "model": self._device.model,
+                    "device_id": self._device.device_id,
+                },
+            }
+        )
         return await self.async_step_discovery_confirm()
 
     async def async_step_discovery_confirm(
@@ -178,7 +177,7 @@ class AwairFlowHandler(ConfigFlow, domain=DOMAIN):
         if not discovered or (user_input and user_input.get(CONF_DEVICE) == "manual"):
             data_schema = vol.Schema({vol.Required(CONF_HOST): str})
 
-        elif discovered:
+        else:
             discovered["manual"] = "Manual"
             data_schema = vol.Schema({vol.Required(CONF_DEVICE): vol.In(discovered)})
 
@@ -248,11 +247,7 @@ class AwairFlowHandler(ConfigFlow, domain=DOMAIN):
         try:
             user = await awair.user()
             devices = await user.devices()
-            if not devices:
-                return (None, "no_devices_found")
-
-            return (user, None)
-
+            return (user, None) if devices else (None, "no_devices_found")
         except AuthError:
             return (None, "invalid_access_token")
         except AwairError as err:

@@ -250,9 +250,10 @@ class ADBDevice(MediaPlayerEntity):
         self.turn_off_command = None
 
         # ADB exceptions to catch
-        if not aftv.adb_server_ip:
-            # Using "adb_shell" (Python ADB implementation)
-            self.exceptions = (
+        self.exceptions = (
+            (ConnectionResetError, RuntimeError)
+            if aftv.adb_server_ip
+            else (
                 AdbTimeoutError,
                 BrokenPipeError,
                 ConnectionResetError,
@@ -262,10 +263,7 @@ class ADBDevice(MediaPlayerEntity):
                 InvalidResponseError,
                 TcpTimeoutException,
             )
-        else:
-            # Using "pure-python-adb" (communicate with ADB server)
-            self.exceptions = (ConnectionResetError, RuntimeError)
-
+        )
         # Property attributes
         self._attr_extra_state_attributes = {
             ATTR_ADB_RESPONSE: None,
@@ -480,9 +478,7 @@ class AndroidTVDevice(ADBDevice):
     @adb_decorator(override_available=True)
     async def async_update(self) -> None:
         """Update the device state and, if necessary, re-connect."""
-        # Check if device is disconnected.
         if not self._attr_available:
-            # Try to connect
             if await self.aftv.adb_connect(log_errors=self._failed_connect_count == 0):
                 self._failed_connect_count = 0
                 self._attr_available = True
@@ -514,7 +510,7 @@ class AndroidTVDevice(ADBDevice):
             )
             sources = [
                 self._app_id_to_name.get(
-                    app_id, app_id if not self._exclude_unnamed_apps else None
+                    app_id, None if self._exclude_unnamed_apps else app_id
                 )
                 for app_id in running_apps
             ]
@@ -569,9 +565,7 @@ class FireTVDevice(ADBDevice):
     @adb_decorator(override_available=True)
     async def async_update(self) -> None:
         """Update the device state and, if necessary, re-connect."""
-        # Check if device is disconnected.
         if not self._attr_available:
-            # Try to connect
             if await self.aftv.adb_connect(log_errors=self._failed_connect_count == 0):
                 self._failed_connect_count = 0
                 self._attr_available = True
@@ -600,7 +594,7 @@ class FireTVDevice(ADBDevice):
             )
             sources = [
                 self._app_id_to_name.get(
-                    app_id, app_id if not self._exclude_unnamed_apps else None
+                    app_id, None if self._exclude_unnamed_apps else app_id
                 )
                 for app_id in running_apps
             ]

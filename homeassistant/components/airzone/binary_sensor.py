@@ -86,31 +86,29 @@ async def async_setup_entry(
     binary_sensors: list[AirzoneBinarySensor] = []
 
     for system_id, system_data in coordinator.data[AZD_SYSTEMS].items():
-        for description in SYSTEM_BINARY_SENSOR_TYPES:
-            if description.key in system_data:
-                binary_sensors.append(
-                    AirzoneSystemBinarySensor(
-                        coordinator,
-                        description,
-                        entry,
-                        system_id,
-                        system_data,
-                    )
-                )
-
+        binary_sensors.extend(
+            AirzoneSystemBinarySensor(
+                coordinator,
+                description,
+                entry,
+                system_id,
+                system_data,
+            )
+            for description in SYSTEM_BINARY_SENSOR_TYPES
+            if description.key in system_data
+        )
     for system_zone_id, zone_data in coordinator.data[AZD_ZONES].items():
-        for description in ZONE_BINARY_SENSOR_TYPES:
-            if description.key in zone_data:
-                binary_sensors.append(
-                    AirzoneZoneBinarySensor(
-                        coordinator,
-                        description,
-                        entry,
-                        system_zone_id,
-                        zone_data,
-                    )
-                )
-
+        binary_sensors.extend(
+            AirzoneZoneBinarySensor(
+                coordinator,
+                description,
+                entry,
+                system_zone_id,
+                zone_data,
+            )
+            for description in ZONE_BINARY_SENSOR_TYPES
+            if description.key in zone_data
+        )
     async_add_entities(binary_sensors)
 
 

@@ -92,7 +92,7 @@ class ServiceBusNotificationService(BaseNotificationService):
             dto[ATTR_ASB_TARGET] = kwargs[ATTR_TARGET]
 
         if data := kwargs.get(ATTR_DATA):
-            dto.update(data)
+            dto |= data
 
         queue_message = ServiceBusMessage(
             json.dumps(dto), content_type=CONTENT_TYPE_JSON

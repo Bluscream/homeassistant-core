@@ -106,11 +106,7 @@ async def async_get_service(hass, config, discovery_info=None):
     if service == "sqs":
         return AWSSQS(session, aws_config)
 
-    if service == "events":
-        return AWSEventBridge(session, aws_config)
-
-    # should not reach here since service was checked in schema
-    return None
+    return AWSEventBridge(session, aws_config) if service == "events" else None
 
 
 class AWSNotify(BaseNotificationService):
@@ -139,24 +135,20 @@ class AWSLambda(AWSNotify):
             return
 
         cleaned_kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        payload = {"message": message}
-        payload.update(cleaned_kwargs)
+        payload = {"message": message} | cleaned_kwargs
         json_payload = json.dumps(payload)
 
         async with self.session.create_client(
-            self.service, **self.aws_config
-        ) as client:
-            tasks = []
-            for target in kwargs.get(ATTR_TARGET, []):
-                tasks.append(
-                    client.invoke(
-                        FunctionName=target,
-                        Payload=json_payload,
-                        ClientContext=self.context,
-                    )
+                self.service, **self.aws_config
+            ) as client:
+            if tasks := [
+                client.invoke(
+                    FunctionName=target,
+                    Payload=json_payload,
+                    ClientContext=self.context,
                 )
-
-            if tasks:
+                for target in kwargs.get(ATTR_TARGET, [])
+            ]:
                 await asyncio.gather(*tasks)
 
 
@@ -181,20 +173,17 @@ class AWSSNS(AWSNotify):
         subject = kwargs.get(ATTR_TITLE, ATTR_TITLE_DEFAULT)
 
         async with self.session.create_client(
-            self.service, **self.aws_config
-        ) as client:
-            tasks = []
-            for target in kwargs.get(ATTR_TARGET, []):
-                tasks.append(
-                    client.publish(
-                        TargetArn=target,
-                        Message=message,
-                        Subject=subject,
-                        MessageAttributes=message_attributes,
-                    )
+                self.service, **self.aws_config
+            ) as client:
+            if tasks := [
+                client.publish(
+                    TargetArn=target,
+                    Message=message,
+                    Subject=subject,
+                    MessageAttributes=message_attributes,
                 )
-
-            if tasks:
+                for target in kwargs.get(ATTR_TARGET, [])
+            ]:
                 await asyncio.gather(*tasks)
 
 
@@ -210,30 +199,26 @@ class AWSSQS(AWSNotify):
             return
 
         cleaned_kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        message_body = {"message": message}
-        message_body.update(cleaned_kwargs)
+        message_body = {"message": message} | cleaned_kwargs
         json_body = json.dumps(message_body)
-        message_attributes = {}
-        for key, val in cleaned_kwargs.items():
-            message_attributes[key] = {
+        message_attributes = {
+            key: {
                 "StringValue": json.dumps(val),
                 "DataType": "String",
             }
-
+            for key, val in cleaned_kwargs.items()
+        }
         async with self.session.create_client(
-            self.service, **self.aws_config
-        ) as client:
-            tasks = []
-            for target in kwargs.get(ATTR_TARGET, []):
-                tasks.append(
-                    client.send_message(
-                        QueueUrl=target,
-                        MessageBody=json_body,
-                        MessageAttributes=message_attributes,
-                    )
+                self.service, **self.aws_config
+            ) as client:
+            if tasks := [
+                client.send_message(
+                    QueueUrl=target,
+                    MessageBody=json_body,
+                    MessageAttributes=message_attributes,
                 )
-
-            if tasks:
+                for target in kwargs.get(ATTR_TARGET, [])
+            ]:
                 await asyncio.gather(*tasks)
 
 
@@ -254,9 +239,8 @@ class AWSEventBridge(AWSNotify):
         )
 
         async with self.session.create_client(
-            self.service, **self.aws_config
-        ) as client:
-            tasks = []
+                self.service, **self.aws_config
+            ) as client:
             entries = []
             for target in kwargs.get(ATTR_TARGET, [None]):
                 entry = {
@@ -269,12 +253,10 @@ class AWSEventBridge(AWSNotify):
                     entry["EventBusName"] = target
 
                 entries.append(entry)
-            for i in range(0, len(entries), 10):
-                tasks.append(
-                    client.put_events(Entries=entries[i : min(i + 10, len(entries))])
-                )
-
-            if tasks:
+            if tasks := [
+                client.put_events(Entries=entries[i : min(i + 10, len(entries))])
+                for i in range(0, len(entries), 10)
+            ]:
                 results = await asyncio.gather(*tasks)
                 for result in results:
                     for entry in result["Entries"]:

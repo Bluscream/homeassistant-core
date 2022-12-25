@@ -463,14 +463,12 @@ class FlowHandler:
         """
         schema = {}
         for key, val in data_schema.schema.items():
-            if isinstance(key, vol.Marker):
-                # Exclude advanced field
-                if (
-                    key.description
-                    and key.description.get("advanced")
-                    and not self.show_advanced_options
-                ):
-                    continue
+            if isinstance(key, vol.Marker) and (
+                key.description
+                and key.description.get("advanced")
+                and not self.show_advanced_options
+            ):
+                continue
 
             new_key = key
             if key in suggested_values and isinstance(key, vol.Marker):

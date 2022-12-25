@@ -461,10 +461,7 @@ def _create_auth_code_store() -> tuple[StoreResultType, RetrieveResultType]:
         # The authorization code MUST expire shortly after it is issued to
         # mitigate the risk of leaks.  A maximum authorization code lifetime of
         # 10 minutes is RECOMMENDED.
-        if dt_util.utcnow() - created < timedelta(minutes=10):
-            return result
-
-        return None
+        return result if dt_util.utcnow() - created < timedelta(minutes=10) else None
 
     return store_result, retrieve_result
 

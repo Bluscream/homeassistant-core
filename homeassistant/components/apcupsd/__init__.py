@@ -72,12 +72,14 @@ class APCUPSdData:
     @property
     def model(self) -> str | None:
         """Return the model of the UPS, if available."""
-        # Different UPS models may report slightly different keys for model, here we
-        # try them all.
-        for model_key in ("APCMODEL", "MODEL"):
-            if model_key in self.status:
-                return self.status[model_key]
-        return None
+        return next(
+            (
+                self.status[model_key]
+                for model_key in ("APCMODEL", "MODEL")
+                if model_key in self.status
+            ),
+            None,
+        )
 
     @property
     def sw_version(self) -> str | None:

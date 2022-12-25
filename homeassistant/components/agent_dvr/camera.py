@@ -104,9 +104,7 @@ class AgentCamera(MjpegCamera):
             if self.device.client.is_available and not self._removed:
                 _LOGGER.error("%s lost", self.name)
                 self._removed = True
-        self._attr_icon = "mdi:camcorder-off"
-        if self.is_on:
-            self._attr_icon = "mdi:camcorder"
+        self._attr_icon = "mdi:camcorder" if self.is_on else "mdi:camcorder-off"
         self._attr_available = self.device.client.is_available
         self._attr_extra_state_attributes = {
             "editable": False,

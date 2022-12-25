@@ -55,9 +55,7 @@ def setup_platform(
     lights = []
     if CONF_USERNAME in config and CONF_PASSWORD in config:
         devices = avion.get_devices(config[CONF_USERNAME], config[CONF_PASSWORD])
-        for device in devices:
-            lights.append(AvionLight(device))
-
+        lights.extend(AvionLight(device) for device in devices)
     for address, device_config in config[CONF_DEVICES].items():
         device = avion.Avion(
             mac=address,

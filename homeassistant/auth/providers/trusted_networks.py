@@ -84,13 +84,14 @@ class TrustedNetworksAuthProvider(AuthProvider):
     @property
     def trusted_proxies(self) -> list[IPNetwork]:
         """Return trusted proxies in the system."""
-        if not self.hass.http:
-            return []
-
-        return [
-            ip_network(trusted_proxy)
-            for trusted_proxy in self.hass.http.trusted_proxies
-        ]
+        return (
+            [
+                ip_network(trusted_proxy)
+                for trusted_proxy in self.hass.http.trusted_proxies
+            ]
+            if self.hass.http
+            else []
+        )
 
     @property
     def support_mfa(self) -> bool:
@@ -184,8 +185,9 @@ class TrustedNetworksAuthProvider(AuthProvider):
         if not self.trusted_networks:
             raise InvalidAuthError("trusted_networks is not configured")
 
-        if not any(
-            ip_addr in trusted_network for trusted_network in self.trusted_networks
+        if all(
+            ip_addr not in trusted_network
+            for trusted_network in self.trusted_networks
         ):
             raise InvalidAuthError("Not in trusted_networks")
 

@@ -156,9 +156,10 @@ class AndroidTVFlowHandler(ConfigFlow, domain=DOMAIN):
             else:
                 user_input.pop(CONF_ADB_SERVER_PORT, None)
 
-            if adb_key:
-                if not await self.hass.async_add_executor_job(_is_file, adb_key):
-                    return self._show_setup_form(user_input, "adbkey_not_file")
+            if adb_key and not await self.hass.async_add_executor_job(
+                _is_file, adb_key
+            ):
+                return self._show_setup_form(user_input, "adbkey_not_file")
 
             self._async_abort_entries_match({CONF_HOST: host})
             error, unique_id = await self._async_check_connection(user_input)
@@ -286,8 +287,7 @@ class OptionsFlowHandler(OptionsFlowWithConfigEntry):
             return self._async_apps_form(app_id)
 
         if user_input is not None:
-            app_id = user_input.get(CONF_APP_ID, self._conf_app_id)
-            if app_id:
+            if app_id := user_input.get(CONF_APP_ID, self._conf_app_id):
                 if user_input.get(CONF_APP_DELETE, False):
                     self._apps.pop(app_id)
                 else:
@@ -328,8 +328,7 @@ class OptionsFlowHandler(OptionsFlowWithConfigEntry):
             return self._async_rules_form(rule_id)
 
         if user_input is not None:
-            rule_id = user_input.get(CONF_RULE_ID, self._conf_rule_id)
-            if rule_id:
+            if rule_id := user_input.get(CONF_RULE_ID, self._conf_rule_id):
                 if user_input.get(CONF_RULE_DELETE, False):
                     self._state_det_rules.pop(rule_id)
                 elif str_det_rule := user_input.get(CONF_RULE_VALUES):

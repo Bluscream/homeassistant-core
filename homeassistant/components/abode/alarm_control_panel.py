@@ -48,9 +48,7 @@ class AbodeAlarm(AbodeDevice, alarm.AlarmControlPanelEntity):
             return STATE_ALARM_DISARMED
         if self._device.is_away:
             return STATE_ALARM_ARMED_AWAY
-        if self._device.is_home:
-            return STATE_ALARM_ARMED_HOME
-        return None
+        return STATE_ALARM_ARMED_HOME if self._device.is_home else None
 
     def alarm_disarm(self, code: str | None = None) -> None:
         """Send disarm command."""

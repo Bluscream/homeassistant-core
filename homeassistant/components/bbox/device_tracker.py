@@ -63,11 +63,9 @@ class BboxDeviceScanner(DeviceScanner):
 
     def get_device_name(self, device):
         """Return the name of the given device or None if we don't know."""
-        filter_named = [
+        if filter_named := [
             result.name for result in self.last_results if result.mac == device
-        ]
-
-        if filter_named:
+        ]:
             return filter_named[0]
         return None
 
@@ -83,16 +81,13 @@ class BboxDeviceScanner(DeviceScanner):
         result = box.get_all_connected_devices()
 
         now = dt_util.now()
-        last_results = []
-        for device in result:
-            if device["active"] != 1:
-                continue
-            last_results.append(
-                Device(
-                    device["macaddress"], device["hostname"], device["ipaddress"], now
-                )
+        last_results = [
+            Device(
+                device["macaddress"], device["hostname"], device["ipaddress"], now
             )
-
+            for device in result
+            if device["active"] == 1
+        ]
         self.last_results = last_results
 
         _LOGGER.info("Scan successful")

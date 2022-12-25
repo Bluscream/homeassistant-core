@@ -150,12 +150,11 @@ class NotifyAuthModule(MultiFactorAuthModule):
     @callback
     def aync_get_available_notify_services(self) -> list[str]:
         """Return list of notify services."""
-        unordered_services = set()
-
-        for service in self.hass.services.async_services().get("notify", {}):
-            if service not in self._exclude:
-                unordered_services.add(service)
-
+        unordered_services = {
+            service
+            for service in self.hass.services.async_services().get("notify", {})
+            if service not in self._exclude
+        }
         if self._include:
             unordered_services &= set(self._include)
 

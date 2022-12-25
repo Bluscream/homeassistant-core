@@ -74,10 +74,7 @@ async def device_scan(hass, identifier, loop):
     scan_result = await scan(loop, timeout=3, hosts=_host_filter(), aiozc=aiozc)
     matches = [atv for atv in scan_result if _filter_device(atv)]
 
-    if matches:
-        return matches[0], matches[0].all_identifiers
-
-    return None, None
+    return (matches[0], matches[0].all_identifiers) if matches else (None, None)
 
 
 class AppleTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -127,12 +124,16 @@ class AppleTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def _entry_unique_id_from_identifers(self, all_identifiers: set[str]) -> str | None:
         """Search existing entries for an identifier and return the unique id."""
-        for entry in self._async_current_entries():
-            if all_identifiers.intersection(
-                entry.data.get(CONF_IDENTIFIERS, [entry.unique_id])
-            ):
-                return entry.unique_id
-        return None
+        return next(
+            (
+                entry.unique_id
+                for entry in self._async_current_entries()
+                if all_identifiers.intersection(
+                    entry.data.get(CONF_IDENTIFIERS, [entry.unique_id])
+                )
+            ),
+            None,
+        )
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
         """Handle initial step when updating invalid credentials."""
@@ -341,30 +342,29 @@ class AppleTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_confirm(self, user_input=None):
         """Handle user-confirmation of discovered node."""
-        if user_input is not None:
-            expected_identifier_count = len(self.context["all_identifiers"])
-            # If number of services found during device scan mismatch number of
-            # identifiers collected during Zeroconf discovery, then trigger a new scan
-            # with hopes of finding all services.
-            if len(self.atv.all_identifiers) != expected_identifier_count:
-                try:
-                    await self.async_find_device()
-                except DeviceNotFound:
-                    return self.async_abort(reason="device_not_found")
+        if user_input is None:
+            return self.async_show_form(
+                step_id="confirm",
+                description_placeholders={
+                    "name": self.atv.name,
+                    "type": model_str(self.atv.device_info.model),
+                },
+            )
+        expected_identifier_count = len(self.context["all_identifiers"])
+        # If number of services found during device scan mismatch number of
+        # identifiers collected during Zeroconf discovery, then trigger a new scan
+        # with hopes of finding all services.
+        if len(self.atv.all_identifiers) != expected_identifier_count:
+            try:
+                await self.async_find_device()
+            except DeviceNotFound:
+                return self.async_abort(reason="device_not_found")
 
-            # If all services still were not found, bail out with an error
-            if len(self.atv.all_identifiers) != expected_identifier_count:
-                return self.async_abort(reason="inconsistent_device")
+        # If all services still were not found, bail out with an error
+        if len(self.atv.all_identifiers) != expected_identifier_count:
+            return self.async_abort(reason="inconsistent_device")
 
-            return await self.async_pair_next_protocol()
-
-        return self.async_show_form(
-            step_id="confirm",
-            description_placeholders={
-                "name": self.atv.name,
-                "type": model_str(self.atv.device_info.model),
-            },
-        )
+        return await self.async_pair_next_protocol()
 
     async def async_pair_next_protocol(self):
         """Start pairing process for the next available protocol."""

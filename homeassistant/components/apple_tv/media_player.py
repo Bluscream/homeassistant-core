@@ -236,9 +236,7 @@ class AppleTvMediaPlayer(AppleTVEntity, MediaPlayerEntity):
     @property
     def media_content_id(self) -> str | None:
         """Content ID of current playing media."""
-        if self._playing:
-            return self._playing.content_identifier
-        return None
+        return self._playing.content_identifier if self._playing else None
 
     @property
     def volume_level(self) -> float | None:
@@ -250,16 +248,12 @@ class AppleTvMediaPlayer(AppleTVEntity, MediaPlayerEntity):
     @property
     def media_duration(self) -> int | None:
         """Duration of current playing media in seconds."""
-        if self._playing:
-            return self._playing.total_time
-        return None
+        return self._playing.total_time if self._playing else None
 
     @property
     def media_position(self) -> int | None:
         """Position of current playing media in seconds."""
-        if self._playing:
-            return self._playing.position
-        return None
+        return self._playing.position if self._playing else None
 
     @property
     def media_position_updated_at(self) -> datetime | None:
@@ -321,9 +315,7 @@ class AppleTvMediaPlayer(AppleTVEntity, MediaPlayerEntity):
     @property
     def media_title(self) -> str | None:
         """Title of current playing media."""
-        if self._playing:
-            return self._playing.title
-        return None
+        return self._playing.title if self._playing else None
 
     @property
     def media_artist(self) -> str | None:

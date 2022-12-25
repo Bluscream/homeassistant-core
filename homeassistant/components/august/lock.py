@@ -63,11 +63,10 @@ class AugustLock(AugustEntityMixin, RestoreEntity, LockEntity):
         try:
             activities = await lock_operation(self._device_id)
         except ClientResponseError as err:
-            if err.status == LOCK_JAMMED_ERR:
-                self._detail.lock_status = LockStatus.JAMMED
-                self._detail.lock_status_datetime = dt_util.utcnow()
-            else:
+            if err.status != LOCK_JAMMED_ERR:
                 raise
+            self._detail.lock_status = LockStatus.JAMMED
+            self._detail.lock_status_datetime = dt_util.utcnow()
         else:
             for lock_activity in activities:
                 update_lock_detail_from_activity(self._detail, lock_activity)

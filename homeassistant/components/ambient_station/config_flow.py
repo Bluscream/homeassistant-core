@@ -27,9 +27,7 @@ class AmbientStationFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def _show_form(self, errors: dict | None = None) -> FlowResult:
         """Show the form to the user."""
         return self.async_show_form(
-            step_id="user",
-            data_schema=self.data_schema,
-            errors=errors if errors else {},
+            step_id="user", data_schema=self.data_schema, errors=errors or {}
         )
 
     async def async_step_user(self, user_input: dict | None = None) -> FlowResult:
@@ -48,12 +46,10 @@ class AmbientStationFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         except AmbientError:
             return await self._show_form({"base": "invalid_key"})
 
-        if not devices:
-            return await self._show_form({"base": "no_devices"})
-
-        # The Application Key (which identifies each config entry) is too long
-        # to show nicely in the UI, so we take the first 12 characters (similar
-        # to how GitHub does it):
-        return self.async_create_entry(
-            title=user_input[CONF_APP_KEY][:12], data=user_input
+        return (
+            self.async_create_entry(
+                title=user_input[CONF_APP_KEY][:12], data=user_input
+            )
+            if devices
+            else await self._show_form({"base": "no_devices"})
         )

@@ -75,13 +75,11 @@ class ActivityStream(AugustSubscriberMixin):
         latest_activity = None
 
         for activity_type in activity_types:
-            if activity_type in latest_device_activities:
-                if (
-                    latest_activity is not None
-                    and latest_device_activities[activity_type].activity_start_time
-                    <= latest_activity.activity_start_time
-                ):
-                    continue
+            if activity_type in latest_device_activities and (
+                latest_activity is None
+                or latest_device_activities[activity_type].activity_start_time
+                > latest_activity.activity_start_time
+            ):
                 latest_activity = latest_device_activities[activity_type]
 
         return latest_activity

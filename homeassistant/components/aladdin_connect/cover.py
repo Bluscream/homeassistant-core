@@ -134,9 +134,7 @@ class AladdinDevice(CoverEntity):
     def is_closed(self) -> bool | None:
         """Update is closed attribute."""
         value = STATES_MAP.get(self._acc.get_door_status(self._device_id, self._number))
-        if value is None:
-            return None
-        return value == STATE_CLOSED
+        return None if value is None else value == STATE_CLOSED
 
     @property
     def is_closing(self) -> bool:

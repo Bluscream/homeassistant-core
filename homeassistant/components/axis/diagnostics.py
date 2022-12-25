@@ -21,9 +21,9 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     device: AxisNetworkDevice = hass.data[AXIS_DOMAIN][config_entry.unique_id]
-    diag: dict[str, Any] = {}
-
-    diag["config"] = async_redact_data(config_entry.as_dict(), REDACT_CONFIG)
+    diag: dict[str, Any] = {
+        "config": async_redact_data(config_entry.as_dict(), REDACT_CONFIG)
+    }
 
     if device.api.vapix.api_discovery:
         diag["api_discovery"] = [

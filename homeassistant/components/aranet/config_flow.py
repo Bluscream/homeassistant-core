@@ -105,19 +105,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     adv,
                 )
 
-        if not self._discovered_devices:
-            return self.async_abort(reason="no_devices_found")
-
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_ADDRESS): vol.In(
-                        {
-                            addr: dev[0]
-                            for (addr, dev) in self._discovered_devices.items()
-                        }
-                    )
-                }
-            ),
+        return (
+            self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_ADDRESS): vol.In(
+                            {
+                                addr: dev[0]
+                                for (addr, dev) in self._discovered_devices.items()
+                            }
+                        )
+                    }
+                ),
+            )
+            if self._discovered_devices
+            else self.async_abort(reason="no_devices_found")
         )

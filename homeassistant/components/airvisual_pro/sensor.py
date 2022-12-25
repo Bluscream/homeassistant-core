@@ -103,9 +103,7 @@ SENSOR_DESCRIPTIONS = (
 @callback
 def async_get_aqi_locale(settings: dict[str, Any]) -> str:
     """Return the correct AQI locale based on settings data."""
-    if settings["is_aqi_usa"]:
-        return "aqi_us"
-    return "aqi_cn"
+    return "aqi_us" if settings["is_aqi_usa"] else "aqi_cn"
 
 
 async def async_setup_entry(

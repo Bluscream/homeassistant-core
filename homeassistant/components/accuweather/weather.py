@@ -147,31 +147,42 @@ class AccuWeatherEntity(
     @property
     def forecast(self) -> list[Forecast] | None:
         """Return the forecast array."""
-        if not self.coordinator.forecast:
-            return None
-        # remap keys from library to keys understood by the weather component
-        return [
-            {
-                ATTR_FORECAST_TIME: utc_from_timestamp(item["EpochDate"]).isoformat(),
-                ATTR_FORECAST_NATIVE_TEMP: item["TemperatureMax"]["Value"],
-                ATTR_FORECAST_NATIVE_TEMP_LOW: item["TemperatureMin"]["Value"],
-                ATTR_FORECAST_NATIVE_PRECIPITATION: self._calc_precipitation(item),
-                ATTR_FORECAST_PRECIPITATION_PROBABILITY: round(
-                    mean(
-                        [
-                            item["PrecipitationProbabilityDay"],
-                            item["PrecipitationProbabilityNight"],
-                        ]
-                    )
-                ),
-                ATTR_FORECAST_NATIVE_WIND_SPEED: item["WindDay"]["Speed"]["Value"],
-                ATTR_FORECAST_WIND_BEARING: item["WindDay"]["Direction"]["Degrees"],
-                ATTR_FORECAST_CONDITION: [
-                    k for k, v in CONDITION_CLASSES.items() if item["IconDay"] in v
-                ][0],
-            }
-            for item in self.coordinator.data[ATTR_FORECAST]
-        ]
+        return (
+            [
+                {
+                    ATTR_FORECAST_TIME: utc_from_timestamp(
+                        item["EpochDate"]
+                    ).isoformat(),
+                    ATTR_FORECAST_NATIVE_TEMP: item["TemperatureMax"]["Value"],
+                    ATTR_FORECAST_NATIVE_TEMP_LOW: item["TemperatureMin"]["Value"],
+                    ATTR_FORECAST_NATIVE_PRECIPITATION: self._calc_precipitation(
+                        item
+                    ),
+                    ATTR_FORECAST_PRECIPITATION_PROBABILITY: round(
+                        mean(
+                            [
+                                item["PrecipitationProbabilityDay"],
+                                item["PrecipitationProbabilityNight"],
+                            ]
+                        )
+                    ),
+                    ATTR_FORECAST_NATIVE_WIND_SPEED: item["WindDay"]["Speed"][
+                        "Value"
+                    ],
+                    ATTR_FORECAST_WIND_BEARING: item["WindDay"]["Direction"][
+                        "Degrees"
+                    ],
+                    ATTR_FORECAST_CONDITION: [
+                        k
+                        for k, v in CONDITION_CLASSES.items()
+                        if item["IconDay"] in v
+                    ][0],
+                }
+                for item in self.coordinator.data[ATTR_FORECAST]
+            ]
+            if self.coordinator.forecast
+            else None
+        )
 
     @staticmethod
     def _calc_precipitation(day: dict[str, Any]) -> float:

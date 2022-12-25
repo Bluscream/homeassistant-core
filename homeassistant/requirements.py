@@ -89,17 +89,21 @@ def pip_kwargs(config_dir: str | None) -> dict[str, Any]:
     }
     if "WHEELS_LINKS" in os.environ:
         kwargs["find_links"] = os.environ["WHEELS_LINKS"]
-    if not (config_dir is None or pkg_util.is_virtual_env()) and not is_docker:
+    if (
+        config_dir is not None
+        and not pkg_util.is_virtual_env()
+        and not is_docker
+    ):
         kwargs["target"] = os.path.join(config_dir, "deps")
     return kwargs
 
 
 def _install_with_retry(requirement: str, kwargs: dict[str, Any]) -> bool:
     """Try to install a package up to MAX_INSTALL_FAILURES times."""
-    for _ in range(MAX_INSTALL_FAILURES):
-        if pkg_util.install_package(requirement, **kwargs):
-            return True
-    return False
+    return any(
+        pkg_util.install_package(requirement, **kwargs)
+        for _ in range(MAX_INSTALL_FAILURES)
+    )
 
 
 def _install_requirements_if_missing(
@@ -245,9 +249,7 @@ class RequirementsManager:
         self._raise_for_failed_requirements(name, missing)
 
         async with self.pip_lock:
-            # Recaculate missing again now that we have the lock
-            missing = self._find_missing_requirements(requirements)
-            if missing:
+            if missing := self._find_missing_requirements(requirements):
                 await self._async_process_requirements(name, missing)
 
     def _find_missing_requirements(self, requirements: list[str]) -> list[str]:

@@ -56,14 +56,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up aurora_abb_powerone sensor based on a config entry."""
-    entities = []
-
     client = hass.data[DOMAIN][config_entry.entry_id]
     data = config_entry.data
 
-    for sens in SENSOR_TYPES:
-        entities.append(AuroraSensor(client, data, sens))
-
+    entities = [AuroraSensor(client, data, sens) for sens in SENSOR_TYPES]
     _LOGGER.debug("async_setup_entry adding %d entities", len(entities))
     async_add_entities(entities, True)
 

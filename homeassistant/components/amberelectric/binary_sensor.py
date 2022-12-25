@@ -80,10 +80,11 @@ async def async_setup_entry(
     """Set up a config entry."""
     coordinator: AmberUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    entities: list = []
     price_spike_description = BinarySensorEntityDescription(
         key="price_spike",
         name=f"{entry.title} - Price Spike",
     )
-    entities.append(AmberPriceSpikeBinarySensor(coordinator, price_spike_description))
+    entities: list = [
+        AmberPriceSpikeBinarySensor(coordinator, price_spike_description)
+    ]
     async_add_entities(entities)

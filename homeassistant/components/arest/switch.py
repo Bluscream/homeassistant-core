@@ -64,30 +64,27 @@ def setup_platform(
         _LOGGER.error("No route to device at %s", resource)
         return
 
-    dev: list[SwitchEntity] = []
     pins = config[CONF_PINS]
-    for pinnum, pin in pins.items():
-        dev.append(
-            ArestSwitchPin(
-                resource,
-                config.get(CONF_NAME, response.json()[CONF_NAME]),
-                pin.get(CONF_NAME),
-                pinnum,
-                pin[CONF_INVERT],
-            )
+    dev: list[SwitchEntity] = [
+        ArestSwitchPin(
+            resource,
+            config.get(CONF_NAME, response.json()[CONF_NAME]),
+            pin.get(CONF_NAME),
+            pinnum,
+            pin[CONF_INVERT],
         )
-
+        for pinnum, pin in pins.items()
+    ]
     functions = config[CONF_FUNCTIONS]
-    for funcname, func in functions.items():
-        dev.append(
-            ArestSwitchFunction(
-                resource,
-                config.get(CONF_NAME, response.json()[CONF_NAME]),
-                func.get(CONF_NAME),
-                funcname,
-            )
+    dev.extend(
+        ArestSwitchFunction(
+            resource,
+            config.get(CONF_NAME, response.json()[CONF_NAME]),
+            func.get(CONF_NAME),
+            funcname,
         )
-
+        for funcname, func in functions.items()
+    )
     add_entities(dev)
 
 

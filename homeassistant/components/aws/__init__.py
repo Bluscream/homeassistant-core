@@ -128,10 +128,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # validate credentials and create sessions
     validation = True
-    tasks = []
-    for cred in conf[ATTR_CREDENTIALS]:
-        tasks.append(_validate_aws_credentials(hass, cred))
-    if tasks:
+    if tasks := [
+        _validate_aws_credentials(hass, cred)
+        for cred in conf[ATTR_CREDENTIALS]
+    ]:
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for index, result in enumerate(results):
             name = conf[ATTR_CREDENTIALS][index][CONF_NAME]

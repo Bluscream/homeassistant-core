@@ -17,7 +17,7 @@ class AsekoEntity(CoordinatorEntity[AsekoDataUpdateCoordinator]):
         self._unit = unit
 
         self._device_model = f"ASIN AQUA {self._unit.type}"
-        self._device_name = self._unit.name if self._unit.name else self._device_model
+        self._device_name = self._unit.name or self._device_model
 
         self._attr_device_info = DeviceInfo(
             name=self._device_name,

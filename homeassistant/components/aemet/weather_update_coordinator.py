@@ -140,13 +140,11 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
         data = {}
         async with async_timeout.timeout(120):
             weather_response = await self._get_aemet_weather()
-        data = self._convert_weather_response(weather_response)
-        return data
+        return self._convert_weather_response(weather_response)
 
     async def _get_aemet_weather(self):
         """Poll weather data from AEMET OpenData."""
-        weather = await self.hass.async_add_executor_job(self._get_weather_and_forecast)
-        return weather
+        return await self.hass.async_add_executor_job(self._get_weather_and_forecast)
 
     def _get_weather_station(self):
         if not self._station:
@@ -240,7 +238,7 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
             return None
 
         elaborated = dt_util.parse_datetime(
-            weather_response.hourly[ATTR_DATA][0][AEMET_ATTR_ELABORATED] + "Z"
+            f"{weather_response.hourly[ATTR_DATA][0][AEMET_ATTR_ELABORATED]}Z"
         )
         now = dt_util.now()
         now_utc = dt_util.utcnow()
@@ -263,7 +261,7 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
             for _station_data in weather_response.station[ATTR_DATA]:
                 if AEMET_ATTR_STATION_DATE in _station_data:
                     _station_dt = dt_util.parse_datetime(
-                        _station_data[AEMET_ATTR_STATION_DATE] + "Z"
+                        f"{_station_data[AEMET_ATTR_STATION_DATE]}Z"
                     )
                     if not station_dt or _station_dt > station_dt:
                         station_data = _station_data
@@ -358,58 +356,59 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
         }
 
     def _get_daily_forecast_from_weather_response(self, weather_response, now):
-        if weather_response.daily:
-            parse = False
-            forecast = []
-            for day in weather_response.daily[ATTR_DATA][0][AEMET_ATTR_FORECAST][
+        if not weather_response.daily:
+            return None
+        parse = False
+        forecast = []
+        for day in weather_response.daily[ATTR_DATA][0][AEMET_ATTR_FORECAST][
                 AEMET_ATTR_DAY
             ]:
-                day_date = dt_util.parse_datetime(day[AEMET_ATTR_DATE])
-                if now.date() == day_date.date():
-                    parse = True
+            day_date = dt_util.parse_datetime(day[AEMET_ATTR_DATE])
+            if now.date() == day_date.date():
+                parse = True
+            if cur_forecast := self._convert_forecast_day(day_date, day):
                 if parse:
-                    cur_forecast = self._convert_forecast_day(day_date, day)
-                    if cur_forecast:
-                        forecast.append(cur_forecast)
-            return forecast
-        return None
+                    forecast.append(cur_forecast)
+        return forecast
 
     def _get_hourly_forecast_from_weather_response(self, weather_response, now):
-        if weather_response.hourly:
-            parse = False
-            hour = now.hour
-            forecast = []
-            for day in weather_response.hourly[ATTR_DATA][0][AEMET_ATTR_FORECAST][
+        if not weather_response.hourly:
+            return None
+        parse = False
+        hour = now.hour
+        forecast = []
+        for day in weather_response.hourly[ATTR_DATA][0][AEMET_ATTR_FORECAST][
                 AEMET_ATTR_DAY
             ]:
-                day_date = dt_util.parse_datetime(day[AEMET_ATTR_DATE])
-                hour_start = 0
-                if now.date() == day_date.date():
-                    parse = True
-                    hour_start = now.hour
-                if parse:
-                    for hour in range(hour_start, 24):
-                        cur_forecast = self._convert_forecast_hour(day_date, day, hour)
-                        if cur_forecast:
-                            forecast.append(cur_forecast)
-            return forecast
-        return None
+            day_date = dt_util.parse_datetime(day[AEMET_ATTR_DATE])
+            hour_start = 0
+            if now.date() == day_date.date():
+                parse = True
+                hour_start = now.hour
+            if parse:
+                for hour in range(hour_start, 24):
+                    if cur_forecast := self._convert_forecast_hour(
+                        day_date, day, hour
+                    ):
+                        forecast.append(cur_forecast)
+        return forecast
 
     def _convert_forecast_day(self, date, day):
-        if not (condition := self._get_condition_day(day)):
-            return None
-
-        return {
-            ATTR_API_FORECAST_CONDITION: condition,
-            ATTR_API_FORECAST_PRECIPITATION_PROBABILITY: self._get_precipitation_prob_day(
-                day
-            ),
-            ATTR_API_FORECAST_TEMP: self._get_temperature_day(day),
-            ATTR_API_FORECAST_TEMP_LOW: self._get_temperature_low_day(day),
-            ATTR_API_FORECAST_TIME: dt_util.as_utc(date).isoformat(),
-            ATTR_API_FORECAST_WIND_SPEED: self._get_wind_speed_day(day),
-            ATTR_API_FORECAST_WIND_BEARING: self._get_wind_bearing_day(day),
-        }
+        return (
+            {
+                ATTR_API_FORECAST_CONDITION: condition,
+                ATTR_API_FORECAST_PRECIPITATION_PROBABILITY: self._get_precipitation_prob_day(
+                    day
+                ),
+                ATTR_API_FORECAST_TEMP: self._get_temperature_day(day),
+                ATTR_API_FORECAST_TEMP_LOW: self._get_temperature_low_day(day),
+                ATTR_API_FORECAST_TIME: dt_util.as_utc(date).isoformat(),
+                ATTR_API_FORECAST_WIND_SPEED: self._get_wind_speed_day(day),
+                ATTR_API_FORECAST_WIND_BEARING: self._get_wind_bearing_day(day),
+            }
+            if (condition := self._get_condition_day(day))
+            else None
+        )
 
     def _convert_forecast_hour(self, date, day, hour):
         if not (condition := self._get_condition(day, hour)):
@@ -450,86 +449,81 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
     @staticmethod
     def _get_condition(day_data, hour):
         """Get weather condition (hour) from weather data."""
-        val = get_forecast_hour_value(day_data[AEMET_ATTR_SKY_STATE], hour)
-        if val:
+        if val := get_forecast_hour_value(day_data[AEMET_ATTR_SKY_STATE], hour):
             return format_condition(val)
         return None
 
     @staticmethod
     def _get_condition_day(day_data):
         """Get weather condition (day) from weather data."""
-        val = get_forecast_day_value(day_data[AEMET_ATTR_SKY_STATE])
-        if val:
+        if val := get_forecast_day_value(day_data[AEMET_ATTR_SKY_STATE]):
             return format_condition(val)
         return None
 
     @staticmethod
     def _get_humidity(day_data, hour):
         """Get humidity from weather data."""
-        val = get_forecast_hour_value(day_data[AEMET_ATTR_HUMIDITY], hour)
-        if val:
+        if val := get_forecast_hour_value(day_data[AEMET_ATTR_HUMIDITY], hour):
             return format_int(val)
         return None
 
     @staticmethod
     def _get_precipitation_prob_day(day_data):
         """Get humidity from weather data."""
-        val = get_forecast_day_value(day_data[AEMET_ATTR_PRECIPITATION_PROBABILITY])
-        if val:
+        if val := get_forecast_day_value(
+            day_data[AEMET_ATTR_PRECIPITATION_PROBABILITY]
+        ):
             return format_int(val)
         return None
 
     @staticmethod
     def _get_rain(day_data, hour):
         """Get rain from weather data."""
-        val = get_forecast_hour_value(day_data[AEMET_ATTR_PRECIPITATION], hour)
-        if val:
+        if val := get_forecast_hour_value(
+            day_data[AEMET_ATTR_PRECIPITATION], hour
+        ):
             return format_float(val)
         return None
 
     @staticmethod
     def _get_rain_prob(day_data, hour):
         """Get rain probability from weather data."""
-        val = get_forecast_interval_value(
+        if val := get_forecast_interval_value(
             day_data[AEMET_ATTR_PRECIPITATION_PROBABILITY], hour
-        )
-        if val:
+        ):
             return format_int(val)
         return None
 
     @staticmethod
     def _get_snow(day_data, hour):
         """Get snow from weather data."""
-        val = get_forecast_hour_value(day_data[AEMET_ATTR_SNOW], hour)
-        if val:
+        if val := get_forecast_hour_value(day_data[AEMET_ATTR_SNOW], hour):
             return format_float(val)
         return None
 
     @staticmethod
     def _get_snow_prob(day_data, hour):
         """Get snow probability from weather data."""
-        val = get_forecast_interval_value(day_data[AEMET_ATTR_SNOW_PROBABILITY], hour)
-        if val:
+        if val := get_forecast_interval_value(
+            day_data[AEMET_ATTR_SNOW_PROBABILITY], hour
+        ):
             return format_int(val)
         return None
 
     def _get_station_id(self):
         """Get station ID from weather data."""
-        if self._station:
-            return self._station[AEMET_ATTR_IDEMA]
-        return None
+        return self._station[AEMET_ATTR_IDEMA] if self._station else None
 
     def _get_station_name(self):
         """Get station name from weather data."""
-        if self._station:
-            return self._station[AEMET_ATTR_STATION_LOCATION]
-        return None
+        return self._station[AEMET_ATTR_STATION_LOCATION] if self._station else None
 
     @staticmethod
     def _get_storm_prob(day_data, hour):
         """Get storm probability from weather data."""
-        val = get_forecast_interval_value(day_data[AEMET_ATTR_STORM_PROBABILITY], hour)
-        if val:
+        if val := get_forecast_interval_value(
+            day_data[AEMET_ATTR_STORM_PROBABILITY], hour
+        ):
             return format_int(val)
         return None
 
@@ -563,15 +557,11 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
 
     def _get_town_id(self):
         """Get town ID from weather data."""
-        if self._town:
-            return self._town[AEMET_ATTR_ID]
-        return None
+        return self._town[AEMET_ATTR_ID] if self._town else None
 
     def _get_town_name(self):
         """Get town name from weather data."""
-        if self._town:
-            return self._town[AEMET_ATTR_NAME]
-        return None
+        return self._town[AEMET_ATTR_NAME] if self._town else None
 
     @staticmethod
     def _get_wind_bearing(day_data, hour):
@@ -598,26 +588,25 @@ class WeatherUpdateCoordinator(DataUpdateCoordinator):
     @staticmethod
     def _get_wind_max_speed(day_data, hour):
         """Get wind max speed from weather data."""
-        val = get_forecast_hour_value(day_data[AEMET_ATTR_WIND_GUST], hour)
-        if val:
+        if val := get_forecast_hour_value(day_data[AEMET_ATTR_WIND_GUST], hour):
             return format_int(val)
         return None
 
     @staticmethod
     def _get_wind_speed(day_data, hour):
         """Get wind speed (hour) from weather data."""
-        val = get_forecast_hour_value(
+        if val := get_forecast_hour_value(
             day_data[AEMET_ATTR_WIND_GUST], hour, key=AEMET_ATTR_SPEED
-        )[0]
-        if val:
+        )[0]:
             return format_int(val)
         return None
 
     @staticmethod
     def _get_wind_speed_day(day_data):
         """Get wind speed (day) from weather data."""
-        val = get_forecast_day_value(day_data[AEMET_ATTR_WIND], key=AEMET_ATTR_SPEED)
-        if val:
+        if val := get_forecast_day_value(
+            day_data[AEMET_ATTR_WIND], key=AEMET_ATTR_SPEED
+        ):
             return format_int(val)
         return None
 

@@ -139,18 +139,23 @@ class AuthProvidersView(HomeAssistantView):
     async def get(self, request: web.Request) -> web.Response:
         """Get available auth providers."""
         hass: HomeAssistant = request.app["hass"]
-        if not onboarding.async_is_user_onboarded(hass):
-            return self.json_message(
+        return (
+            self.json(
+                [
+                    {
+                        "name": provider.name,
+                        "id": provider.id,
+                        "type": provider.type,
+                    }
+                    for provider in hass.auth.auth_providers
+                ]
+            )
+            if onboarding.async_is_user_onboarded(hass)
+            else self.json_message(
                 message="Onboarding not finished",
                 status_code=HTTPStatus.BAD_REQUEST,
                 message_code="onboarding_required",
             )
-
-        return self.json(
-            [
-                {"name": provider.name, "id": provider.id, "type": provider.type}
-                for provider in hass.auth.auth_providers
-            ]
         )
 
 

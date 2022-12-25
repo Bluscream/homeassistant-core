@@ -159,9 +159,9 @@ class AfterShipSensor(SensorEntity):
                 track["tracking_number"] if track["title"] is None else track["title"]
             )
             last_checkpoint = (
-                f"Shipment {track['tag'].lower()}"
-                if not track["checkpoints"]
-                else track["checkpoints"][-1]
+                track["checkpoints"][-1]
+                if track["checkpoints"]
+                else f"Shipment {track['tag'].lower()}"
             )
             status_counts[status] = status_counts.get(status, 0) + 1
             parsed_trackings.append(

@@ -111,9 +111,7 @@ class AcerSwitch(SwitchEntity):
         """Write msg, obtain answer and format output."""
         # answers are formatted as ***\answer\r***
         awns = self._write_read(msg)
-        if match := re.search(r"\r(.+)\r", awns):
-            return match.group(1)
-        return STATE_UNKNOWN
+        return match[1] if (match := re.search(r"\r(.+)\r", awns)) else STATE_UNKNOWN
 
     def update(self) -> None:
         """Get the latest state from the projector."""

@@ -49,42 +49,43 @@ def discover_sensors(topic, payload):
                 UnitOfPrecipitationDepth.INCHES,
                 device_class=SensorDeviceClass.PRECIPITATION,
             )
-        return (
-            ArwnSensor(
-                topic + "/total",
-                "Total Rainfall",
-                "total",
-                unit,
-                device_class=SensorDeviceClass.PRECIPITATION,
-            ),
-            ArwnSensor(
-                topic + "/rate",
-                "Rainfall Rate",
-                "rate",
-                unit,
-                device_class=SensorDeviceClass.PRECIPITATION,
-            ),
+        return ArwnSensor(
+            f"{topic}/total",
+            "Total Rainfall",
+            "total",
+            unit,
+            device_class=SensorDeviceClass.PRECIPITATION,
+        ), ArwnSensor(
+            f"{topic}/rate",
+            "Rainfall Rate",
+            "rate",
+            unit,
+            device_class=SensorDeviceClass.PRECIPITATION,
         )
     if domain == "barometer":
         return ArwnSensor(topic, "Barometer", "pressure", unit, "mdi:thermometer-lines")
     if domain == "wind":
         return (
             ArwnSensor(
-                topic + "/speed",
+                f"{topic}/speed",
                 "Wind Speed",
                 "speed",
                 unit,
                 device_class=SensorDeviceClass.WIND_SPEED,
             ),
             ArwnSensor(
-                topic + "/gust",
+                f"{topic}/gust",
                 "Wind Gust",
                 "gust",
                 unit,
                 device_class=SensorDeviceClass.WIND_SPEED,
             ),
             ArwnSensor(
-                topic + "/dir", "Wind Direction", "direction", DEGREE, "mdi:compass"
+                f"{topic}/dir",
+                "Wind Direction",
+                "direction",
+                DEGREE,
+                "mdi:compass",
             ),
         )
 
@@ -168,7 +169,7 @@ class ArwnSensor(SensorEntity):
     def set_event(self, event):
         """Update the sensor with the most recent event."""
         ev = {}
-        ev.update(event)
+        ev |= event
         self._attr_extra_state_attributes = ev
-        self._attr_native_value = ev.get(self._state_key, None)
+        self._attr_native_value = ev.get(self._state_key)
         self.async_write_ha_state()

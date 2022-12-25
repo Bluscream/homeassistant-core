@@ -191,9 +191,7 @@ class Alert(Entity):
     def state(self) -> str:
         """Return the alert status."""
         if self._firing:
-            if self._ack:
-                return STATE_OFF
-            return STATE_ON
+            return STATE_OFF if self._ack else STATE_ON
         return STATE_IDLE
 
     async def watched_entity_change(self, event: Event) -> None:
@@ -303,6 +301,4 @@ class Alert(Entity):
 
     async def async_toggle(self, **kwargs: Any) -> None:
         """Async toggle alert."""
-        if self._ack:
-            return await self.async_turn_on()
-        return await self.async_turn_off()
+        return await self.async_turn_on() if self._ack else await self.async_turn_off()

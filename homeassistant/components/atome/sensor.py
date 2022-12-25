@@ -76,8 +76,7 @@ def setup_platform(
 
     data = AtomeData(atome_client)
 
-    sensors = []
-    sensors.append(AtomeSensor(data, LIVE_NAME, LIVE_TYPE))
+    sensors = [AtomeSensor(data, LIVE_NAME, LIVE_TYPE)]
     sensors.append(AtomeSensor(data, DAILY_NAME, DAILY_TYPE))
     sensors.append(AtomeSensor(data, WEEKLY_NAME, WEEKLY_TYPE))
     sensors.append(AtomeSensor(data, MONTHLY_NAME, MONTHLY_TYPE))

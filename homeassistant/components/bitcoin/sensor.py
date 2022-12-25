@@ -180,10 +180,10 @@ class BitcoinSensor(SensorEntity):
         """Get the latest data and updates the states."""
         self.data.update()
         stats = self.data.stats
-        ticker = self.data.ticker
-
         sensor_type = self.entity_description.key
         if sensor_type == "exchangerate":
+            ticker = self.data.ticker
+
             self._attr_native_value = ticker[self._currency].p15min
             self._attr_native_unit_of_measurement = self._currency
         elif sensor_type == "trade_volume_btc":

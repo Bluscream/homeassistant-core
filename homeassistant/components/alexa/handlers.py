@@ -895,9 +895,9 @@ async def async_api_set_thermostat_mode(
 
     data = {ATTR_ENTITY_ID: entity.entity_id}
 
-    ha_preset = next((k for k, v in API_THERMOSTAT_PRESETS.items() if v == mode), None)
-
-    if ha_preset:
+    if ha_preset := next(
+        (k for k, v in API_THERMOSTAT_PRESETS.items() if v == mode), None
+    ):
         presets = entity.attributes.get(climate.ATTR_PRESET_MODES, [])
 
         if ha_preset not in presets:
@@ -1026,10 +1026,12 @@ async def async_api_disarm(
         return response
 
     payload = directive.payload
-    if "authorization" in payload:
+    if (
+        "authorization" in payload
+        and payload["authorization"]["type"] == "FOUR_DIGIT_PIN"
+    ):
         value = payload["authorization"]["value"]
-        if payload["authorization"]["type"] == "FOUR_DIGIT_PIN":
-            data["code"] = value
+        data["code"] = value
 
     await hass.services.async_call(
         entity.domain, SERVICE_ALARM_DISARM, data, blocking=True, context=context
@@ -1244,7 +1246,6 @@ async def async_api_set_range(
             service = cover.SERVICE_SET_COVER_POSITION
             data[cover.ATTR_POSITION] = range_value
 
-    # Cover Tilt
     elif instance == f"{cover.DOMAIN}.tilt":
         range_value = int(range_value)
         if range_value == 0:
@@ -1255,7 +1256,6 @@ async def async_api_set_range(
             service = cover.SERVICE_SET_COVER_TILT_POSITION
             data[cover.ATTR_TILT_POSITION] = range_value
 
-    # Fan Speed
     elif instance == f"{fan.DOMAIN}.{fan.ATTR_PERCENTAGE}":
         range_value = int(range_value)
         if range_value == 0:
@@ -1268,13 +1268,11 @@ async def async_api_set_range(
             else:
                 service = fan.SERVICE_TURN_ON
 
-    # Humidifier target humidity
     elif instance == f"{humidifier.DOMAIN}.{humidifier.ATTR_HUMIDITY}":
         range_value = int(range_value)
         service = humidifier.SERVICE_SET_HUMIDITY
         data[humidifier.ATTR_HUMIDITY] = range_value
 
-    # Input Number Value
     elif instance == f"{input_number.DOMAIN}.{input_number.ATTR_VALUE}":
         range_value = float(range_value)
         service = input_number.SERVICE_SET_VALUE
@@ -1282,19 +1280,17 @@ async def async_api_set_range(
         max_value = float(entity.attributes[input_number.ATTR_MAX])
         data[input_number.ATTR_VALUE] = min(max_value, max(min_value, range_value))
 
-    # Vacuum Fan Speed
     elif instance == f"{vacuum.DOMAIN}.{vacuum.ATTR_FAN_SPEED}":
         service = vacuum.SERVICE_SET_FAN_SPEED
         speed_list = entity.attributes[vacuum.ATTR_FAN_SPEED_LIST]
-        speed = next(
-            (v for i, v in enumerate(speed_list) if i == int(range_value)), None
-        )
+        if speed := next(
+            (v for i, v in enumerate(speed_list) if i == int(range_value)),
+            None,
+        ):
+            data[vacuum.ATTR_FAN_SPEED] = speed
 
-        if not speed:
-            msg = "Entity does not support value"
-            raise AlexaInvalidValueError(msg)
-
-        data[vacuum.ATTR_FAN_SPEED] = speed
+        else:
+            raise AlexaInvalidValueError("Entity does not support value")
 
     else:
         raise AlexaInvalidDirectiveError(DIRECTIVE_NOT_SUPPORTED)
@@ -1559,7 +1555,7 @@ async def async_api_seek(
         msg = f"{entity} did not return the current media position."
         raise AlexaVideoActionNotPermittedForContentError(msg)
 
-    seek_position = max(int(current_position) + int(position_delta / 1000), 0)
+    seek_position = max(int(current_position) + position_delta // 1000, 0)
 
     media_duration = entity.attributes.get(media_player.ATTR_MEDIA_DURATION)
     if media_duration and 0 < int(media_duration) < seek_position:

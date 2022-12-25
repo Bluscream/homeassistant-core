@@ -33,22 +33,19 @@ async def async_get_triggers(
 ) -> list[dict[str, str]]:
     """List device triggers for Arcam FMJ Receiver control devices."""
     registry = entity_registry.async_get(hass)
-    triggers = []
-
-    # Get all the integrations entities for this device
-    for entry in entity_registry.async_entries_for_device(registry, device_id):
-        if entry.domain == "media_player":
-            triggers.append(
-                {
-                    CONF_PLATFORM: "device",
-                    CONF_DEVICE_ID: device_id,
-                    CONF_DOMAIN: DOMAIN,
-                    CONF_ENTITY_ID: entry.entity_id,
-                    CONF_TYPE: "turn_on",
-                }
-            )
-
-    return triggers
+    return [
+        {
+            CONF_PLATFORM: "device",
+            CONF_DEVICE_ID: device_id,
+            CONF_DOMAIN: DOMAIN,
+            CONF_ENTITY_ID: entry.entity_id,
+            CONF_TYPE: "turn_on",
+        }
+        for entry in entity_registry.async_entries_for_device(
+            registry, device_id
+        )
+        if entry.domain == "media_player"
+    ]
 
 
 async def async_attach_trigger(

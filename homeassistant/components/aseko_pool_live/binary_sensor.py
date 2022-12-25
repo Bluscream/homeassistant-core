@@ -67,8 +67,10 @@ async def async_setup_entry(
     ]
     entities: list[BinarySensorEntity] = []
     for unit, coordinator in data:
-        for description in UNIT_BINARY_SENSORS:
-            entities.append(AsekoUnitBinarySensorEntity(unit, coordinator, description))
+        entities.extend(
+            AsekoUnitBinarySensorEntity(unit, coordinator, description)
+            for description in UNIT_BINARY_SENSORS
+        )
     async_add_entities(entities)
 
 

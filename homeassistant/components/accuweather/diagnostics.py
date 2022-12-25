@@ -20,9 +20,9 @@ async def async_get_config_entry_diagnostics(
         config_entry.entry_id
     ]
 
-    diagnostics_data = {
-        "config_entry_data": async_redact_data(dict(config_entry.data), TO_REDACT),
+    return {
+        "config_entry_data": async_redact_data(
+            dict(config_entry.data), TO_REDACT
+        ),
         "coordinator_data": coordinator.data,
     }
-
-    return diagnostics_data

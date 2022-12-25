@@ -50,10 +50,7 @@ class Observation:
             "observed": self.observed,
         }
 
-        for key, value in dic.copy().items():
-            if value is None:
-                del dic[key]
-
+        dic = {key: value for key, value in dic.items() if value is not None}
         return dic
 
     def is_mirror(self, other: Observation) -> bool:
@@ -67,6 +64,4 @@ class Observation:
     @property
     def template(self) -> str | None:
         """Not all observations have templates and we want to get template strings."""
-        if self.value_template is not None:
-            return self.value_template.template
-        return None
+        return None if self.value_template is None else self.value_template.template

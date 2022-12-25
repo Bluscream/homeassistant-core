@@ -23,8 +23,7 @@ async def async_setup_entry(
 
     entities: list[SelectEntity] = []
     if aircons := instance["coordinator"].data.get("aircons"):
-        for ac_key in aircons:
-            entities.append(AdvantageAirMyZone(instance, ac_key))
+        entities.extend(AdvantageAirMyZone(instance, ac_key) for ac_key in aircons)
     async_add_entities(entities)
 
 

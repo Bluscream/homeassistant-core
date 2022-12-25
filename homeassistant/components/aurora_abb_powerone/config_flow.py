@@ -37,8 +37,7 @@ def validate_and_connect(
     comport = data[CONF_PORT]
     address = data[CONF_ADDRESS]
     _LOGGER.debug("Initialising com port=%s", comport)
-    ret = {}
-    ret["title"] = DEFAULT_INTEGRATION_TITLE
+    ret = {"title": DEFAULT_INTEGRATION_TITLE}
     try:
         client = AuroraSerialClient(address, comport, parity="N", timeout=1)
         client.connect()
@@ -64,7 +63,7 @@ def scan_comports() -> tuple[list[str] | None, str | None]:
     for port in com_ports:
         com_ports_list.append(port.device)
         _LOGGER.debug("COM port option: %s", port.device)
-    if len(com_ports_list) > 0:
+    if com_ports_list:
         return com_ports_list, com_ports_list[0]
     _LOGGER.warning("No com ports found.  Need a valid RS485 device to communicate")
     return None, None

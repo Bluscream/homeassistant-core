@@ -77,9 +77,7 @@ class DateTimeJSONEncoder(json.JSONEncoder):
 
     def default(self, o):
         """Implement encoding logic."""
-        if isinstance(o, datetime):
-            return o.isoformat()
-        return super().default(o)
+        return o.isoformat() if isinstance(o, datetime) else super().default(o)
 
 
 class KafkaManager:
@@ -137,7 +135,5 @@ class KafkaManager:
 
     async def write(self, event):
         """Write a binary payload to Kafka."""
-        payload = self._encode_event(event)
-
-        if payload:
+        if payload := self._encode_event(event):
             await self._producer.send_and_wait(self._topic, payload)

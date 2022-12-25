@@ -67,12 +67,9 @@ class InsecureExampleModule(MultiFactorAuthModule):
 
     async def async_depose_user(self, user_id: str) -> None:
         """Remove user from mfa module."""
-        found = None
-        for data in self._data:
-            if data["user_id"] == user_id:
-                found = data
-                break
-        if found:
+        if found := next(
+            (data for data in self._data if data["user_id"] == user_id), None
+        ):
             self._data.remove(found)
 
     async def async_is_user_setup(self, user_id: str) -> bool:

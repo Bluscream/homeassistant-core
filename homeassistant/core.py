@@ -182,7 +182,7 @@ def callback(func: _CallableT) -> _CallableT:
 
 def is_callback(func: Callable[..., Any]) -> bool:
     """Check if function is safe to be called in the event loop."""
-    return getattr(func, "_hass_callback", False) is True
+    return getattr(func, "_hass_callback", False)
 
 
 @callback
@@ -770,7 +770,7 @@ class Context:
 
     def __eq__(self, other: Any) -> bool:
         """Compare contexts."""
-        return bool(self.__class__ == other.__class__ and self.id == other.id)
+        return self.__class__ == other.__class__ and self.id == other.id
 
     def as_dict(self) -> dict[str, str | None]:
         """Return a dictionary representation of the context."""
@@ -1128,7 +1128,7 @@ class State:
         validate_entity_id: bool | None = True,
     ) -> None:
         """Initialize a new state."""
-        state = str(state)
+        state = state
 
         if validate_entity_id and not valid_entity_id(entity_id):
             raise InvalidEntityFormatError(
@@ -1459,7 +1459,7 @@ class StateMachine:
         This method must be run in the event loop.
         """
         entity_id = entity_id.lower()
-        new_state = str(new_state)
+        new_state = new_state
         attributes = attributes or {}
         if (old_state := self._states.get(entity_id)) is None:
             same_state = False
@@ -1888,20 +1888,14 @@ class Config:
         thepath = pathlib.Path(path)
         try:
             # The file path does not have to exist (it's parent should)
-            if thepath.exists():
-                thepath = thepath.resolve()
-            else:
-                thepath = thepath.parent.resolve()
+            thepath = thepath.resolve() if thepath.exists() else thepath.parent.resolve()
         except (FileNotFoundError, RuntimeError, PermissionError):
             return False
 
         for allowed_path in self.allowlist_external_dirs:
-            try:
+            with suppress(ValueError):
                 thepath.relative_to(allowed_path)
                 return True
-            except ValueError:
-                pass
-
         return False
 
     def as_dict(self) -> dict[str, Any]:

@@ -157,7 +157,6 @@ class AirlyDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, str | float | int]:
         """Update data via library."""
-        data: dict[str, str | float | int] = {}
         if self.use_nearest:
             measurements = self.airly.create_measurements_session_nearest(
                 self.latitude, self.longitude, max_distance_km=5
@@ -192,8 +191,9 @@ class AirlyDataUpdateCoordinator(DataUpdateCoordinator):
 
         if index["description"] == NO_AIRLY_SENSORS:
             raise UpdateFailed("Can't retrieve data: no Airly sensors in this area")
-        for value in values:
-            data[value["name"]] = value["value"]
+        data: dict[str, str | float | int] = {
+            value["name"]: value["value"] for value in values
+        }
         for standard in standards:
             data[f"{standard['pollutant']}_LIMIT"] = standard["limit"]
             data[f"{standard['pollutant']}_PERCENT"] = standard["percent"]

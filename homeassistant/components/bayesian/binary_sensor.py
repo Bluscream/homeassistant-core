@@ -323,7 +323,7 @@ class BayesianBinarySensor(BinarySensorEntity):
     @callback
     def _recalculate_and_write_state(self) -> None:
         self.probability = self._calculate_new_probability()
-        self._attr_is_on = bool(self.probability >= self._probability_threshold)
+        self._attr_is_on = self.probability >= self._probability_threshold
         self.async_write_ha_state()
 
     def _initialize_current_observations(self) -> OrderedDict[UUID, Observation]:

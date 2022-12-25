@@ -142,10 +142,7 @@ class SharpAquosTVDevice(MediaPlayerEntity):
         else:
             self._remote.power_on_command_settings(0)
         # Get mute state
-        if self._remote.mute() == 2:
-            self._attr_is_volume_muted = False
-        else:
-            self._attr_is_volume_muted = True
+        self._attr_is_volume_muted = self._remote.mute() != 2
         # Get source
         self._attr_source = SOURCES.get(self._remote.input())
         # Get volume

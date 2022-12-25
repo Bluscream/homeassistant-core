@@ -58,14 +58,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.data = user_input
                 self.services = await self.client.get_services(drop_types=FETCH_TYPES)  # type: ignore[union-attr]
 
-                if not self.services:
-                    return self.async_abort(reason="no_services_found")
-
-                return self.async_create_entry(
-                    title=self.data[CONF_USERNAME],
-                    data=self.data,
+                return (
+                    self.async_create_entry(
+                        title=self.data[CONF_USERNAME],
+                        data=self.data,
+                    )
+                    if self.services
+                    else self.async_abort(reason="no_services_found")
                 )
-
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(

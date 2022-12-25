@@ -73,10 +73,11 @@ async def async_setup_entry(
     if aircons := instance["coordinator"].data.get("aircons"):
         for ac_key, ac_device in aircons.items():
             entities.append(AdvantageAirAC(instance, ac_key))
-            for zone_key, zone in ac_device["zones"].items():
-                # Only add zone climate control when zone is in temperature control
-                if zone["type"] != 0:
-                    entities.append(AdvantageAirZone(instance, ac_key, zone_key))
+            entities.extend(
+                AdvantageAirZone(instance, ac_key, zone_key)
+                for zone_key, zone in ac_device["zones"].items()
+                if zone["type"] != 0
+            )
     async_add_entities(entities)
 
 

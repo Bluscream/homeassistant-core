@@ -92,27 +92,22 @@ class AbodeLight(AbodeDevice, LightEntity):
     @property
     def hs_color(self) -> tuple[float, float] | None:
         """Return the color of the light."""
-        _hs = None
-        if self._device.has_color:
-            _hs = self._device.color
-        return _hs
+        return self._device.color if self._device.has_color else None
 
     @property
     def color_mode(self) -> str | None:
         """Return the color mode of the light."""
-        if self._device.is_dimmable and self._device.is_color_capable:
-            if self.hs_color is not None:
-                return ColorMode.HS
-            return ColorMode.COLOR_TEMP
         if self._device.is_dimmable:
+            if self._device.is_color_capable:
+                return ColorMode.HS if self.hs_color is not None else ColorMode.COLOR_TEMP
             return ColorMode.BRIGHTNESS
         return ColorMode.ONOFF
 
     @property
     def supported_color_modes(self) -> set[str] | None:
         """Flag supported color modes."""
-        if self._device.is_dimmable and self._device.is_color_capable:
-            return {ColorMode.COLOR_TEMP, ColorMode.HS}
         if self._device.is_dimmable:
+            if self._device.is_color_capable:
+                return {ColorMode.COLOR_TEMP, ColorMode.HS}
             return {ColorMode.BRIGHTNESS}
         return {ColorMode.ONOFF}

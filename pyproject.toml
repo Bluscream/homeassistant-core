@@ -39,7 +39,7 @@ dependencies    = [
     "httpx==0.25.0",
     "home-assistant-bluetooth==1.10.4",
     "ifaddr==0.2.0",
-    "Jinja2==3.1.2",
+    "Jinja2==3.1.4",
     "lru-dict==1.2.0",
     "PyJWT==2.8.0",
     # PyJWT has loose dependency. We want the latest one.
